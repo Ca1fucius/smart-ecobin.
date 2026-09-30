@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart EcoBin — Умная сортировка</title>
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --accent: #3b82f6;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Шапка */
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Карточки */
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Баланс и прогресс */
+    .balance-box {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .balance-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Кнопки симуляции сдачи */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-action {
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+    }
+
+    .btn-action span.icon {
+      font-size: 1.4rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn-primary:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    /* Калькулятор объёма */
+    .calc-inputs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .calc-result {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #1e40af;
+    }
+
+    /* Эко-факты */
+    .eco-facts {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: #4b5563;
+    }
+
+    .fact-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: #fafafa;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .fact-icon {
+      font-size: 1.2rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .modal select, .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Шапка -->
+    <header>
+      <h1>🌿 Smart EcoBin</h1>
+      <p>Умная урна: сортируй отходы с выгодой</p>
+    </header>
+
+    <!-- Личный кабинет & Бонусы -->
+    <div class="card">
+      <div class="card-title">👤 Мой баланс</div>
+      <div class="balance-box">
+        <div class="balance-value"><span id="userBalance">0</span> ₸</div>
+        <small style="color: var(--text-muted);">1 бонус = 1 тенге</small>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted); display:flex; justify-content:space-between;">
+        <span>Прогресс до вывода:</span>
+        <span><b id="progressPercent">0%</b> (цель: 1 000 ₸)</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+
+      <button id="withdrawBtn" class="btn-primary" disabled onclick="openWithdrawModal()">
+        Вывести 1 000 ₸
+      </button>
+
+      <!-- Интерактивная зона симуляции сдачи мусора через урну -->
+      <div style="margin-top: 18px;">
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
+          СИМУЛЯЦИЯ СДАЧИ В ОТСЕК:
+        </span>
+        <div class="btn-grid">
+          <button class="btn-action" onclick="addTrash('paper', 15)">
+            <span class="icon">📄</span>
+            Макулатура
+            <small>+15 ₸</small>
+          </button>
+          <button class="btn-action" onclick="addTrash('plastic', 25)">
+            <span class="icon">🧴</span>
+            Пластик
+            <small>+25 ₸</small>
+          </button>
+          <button class="btn-action" onclick="addTrash('metal_glass', 35)">
+            <span class="icon">🥫</span>
+            Стекло / Жесть
+            <small>+35 ₸</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Калькулятор объёма урны / контейнера -->
+    <div class="card">
+      <div class="card-title">📐 Формула объёма (V = a × b × h)</div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+        Рассчитайте вместимость приёмного отсека или накопительного контейнера в сантиметрах:
+      </p>
+
+      <div class="calc-inputs">
+        <div class="input-group">
+          <label for="dimL">Длина (см)</label>
+          <input type="number" id="dimL" value="30" min="0" oninput="calculateVolume()">
+        </div>
+        <div class="input-group">
+          <label for="dimW">Ширина (см)</label>
+          <input type="number" id="dimW" value="25" min="0" oninput="calculateVolume()">
+        </div>
+        <div class="input-group">
+          <label for="dimH">Высота (см)</label>
+          <input type="number" id="dimH" value="40" min="0" oninput="calculateVolume()">
+        </div>
+      </div>
+
+      <div class="calc-result" id="calcResult">
+        <strong>Объём:</strong> 0.030 м³ (~30.0 л)
+      </div>
+    </div>
+
+    <!-- Блок экологии -->
+    <div class="card">
+      <div class="card-title">🌍 Зачем нужна сортировка?</div>
+      <div class="eco-facts">
+        <div class="fact-item">
+          <div class="fact-icon">📦</div>
+          <div><strong>Макулатура:</strong> 100 кг сданной бумаги спасают 1 взрослое дерево и экономят до 2 000 литров чистой воды.</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-icon">🥤</div>
+          <div><strong>Пластик:</strong> Разлагается до 450 лет. Переработка одной пластиковой бутылки экономит энергию для 3 часов работы лампы.</div>
+        </div>
+        <div class="fact-item">
+          <div class="fact-icon">🥫</div>
+          <div><strong>Жесть и металл:</strong> Могут перерабатываться бесконечное количество раз без потери прочности и качества.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно вывода средств -->
+  <div class="modal" id="withdrawModal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 10px;">Вывод бонусов</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Доступно к выводу: 1 000 ₸</p>
+
+      <label style="font-size: 0.85rem; margin-top: 10px; display:block;">Куда направить средства:</label>
+      <select id="withdrawTarget">
+        <option value="phone">Баланс телефона (Beeline, Kcell, Tele2/Altel)</option>
+        <option value="transport">Транспортная карта / Проезд</option>
+        <option value="charity">Экологический фонд озеленения</option>
+      </select>
+
+      <input type="text" id="withdrawAccount" placeholder="Номер телефона или карты" />
+
+      <div style="display:flex; gap: 8px;">
+        <button class="btn-primary" style="margin-top:0;" onclick="confirmWithdraw()">Подтвердить</button>
+        <button style="background:#e5e7eb;" onclick="closeWithdrawModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WITHDRAW_LIMIT = 1000;
+    let balance = parseInt(localStorage.getItem('ecoBalance') || '0', 10);
+
+    function updateUI() {
+      document.getElementById('userBalance').textContent = balance;
+      const progress = Math.min((balance / WITHDRAW_LIMIT) * 100, 100);
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('progressPercent').textContent = Math.floor(progress) + '%';
+
+      const withdrawBtn = document.getElementById('withdrawBtn');
+      if (balance >= WITHDRAW_LIMIT) {
+        withdrawBtn.disabled = false;
+        withdrawBtn.textContent = 'Вывести 1 000 ₸ (Доступно!)';
+      } else {
+        withdrawBtn.disabled = true;
+        withdrawBtn.textContent = `До вывода ещё ${WITHDRAW_LIMIT - balance} ₸`;
+      }
+    }
+
+    function addTrash(type, reward) {
+      balance += reward;
+      localStorage.setItem('ecoBalance', balance);
+      updateUI();
+    }
+
+    function openWithdrawModal() {
+      document.getElementById('withdrawModal').style.display = 'flex';
+    }
+
+    function closeWithdrawModal() {
+      document.getElementById('withdrawModal').style.display = 'none';
+    }
+
+    function confirmWithdraw() {
+      const account = document.getElementById('withdrawAccount').value.trim();
+      if (!account) {
+        alert('Пожалуйста, введите реквизиты!');
+        return;
+      }
+
+      balance -= WITHDRAW_LIMIT;
+      localStorage.setItem('ecoBalance', balance);
+      updateUI();
+      closeWithdrawModal();
+      alert('Запрос на вывод 1 000 ₸ успешно оформлен!');
+    }
+
+    // Расчет объема: V = a * b * h (в сантиметрах -> метры кубические и литры)
+    function calculateVolume() {
+      const l = parseFloat(document.getElementById('dimL').value) || 0;
+      const w = parseFloat(document.getElementById('dimW').value) || 0;
+      const h = parseFloat(document.getElementById('dimH').value) || 0;
+
+      const volumeCm3 = l * w * h;
+      const volumeM3 = volumeCm3 / 1000000;
+      const volumeLiters = volumeCm3 / 1000;
+
+      document.getElementById('calcResult').innerHTML = 
+        `<strong>Объём:</strong> ${volumeM3.toFixed(3)} м³ (~${volumeLiters.toFixed(1)} л)`;
+    }
+
+    // Инициализация при запуске
+    updateUI();
+    calculateVolume();
+  </script>
+</body>
+</html>
