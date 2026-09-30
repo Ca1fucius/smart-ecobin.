@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart EcoBin — Умная сортировка</title>
+  <title>Smart EcoBin — Умная сортировка / Ақылды сұрыптау</title>
   <style>
     :root {
       --primary: #10b981;
@@ -13,7 +13,6 @@
       --text: #1f2937;
       --text-muted: #6b7280;
       --accent: #3b82f6;
-      --warning: #f59e0b;
     }
 
     * {
@@ -40,24 +39,55 @@
       gap: 16px;
     }
 
-    /* Шапка */
+    /* Шапка и переключатель языка */
     header {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       padding: 20px;
       border-radius: 16px;
       text-align: center;
+      position: relative;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
+    .lang-switcher {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      padding: 3px;
+      display: flex;
+      gap: 2px;
+      backdrop-filter: blur(4px);
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .lang-btn.active {
+      background: white;
+      color: var(--primary-dark);
+    }
+
     header h1 {
-      font-size: 1.5rem;
+      font-size: 1.45rem;
       margin-bottom: 4px;
+      margin-top: 6px;
     }
 
     header p {
-      font-size: 0.9rem;
-      opacity: 0.9;
+      font-size: 0.88rem;
+      opacity: 0.95;
     }
 
     /* Карточки */
@@ -77,7 +107,7 @@
       gap: 8px;
     }
 
-    /* Баланс и прогресс */
+    /* Баланс */
     .balance-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
@@ -109,12 +139,12 @@
       transition: width 0.3s ease;
     }
 
-    /* Кнопки симуляции сдачи */
+    /* Кнопки */
     .btn-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
     button {
@@ -132,7 +162,7 @@
     }
 
     .btn-action {
-      background: #f3f4f6;
+      background: #f9fafb;
       color: var(--text);
       border: 1px solid #e5e7eb;
       display: flex;
@@ -210,9 +240,10 @@
     }
 
     .fact-icon {
-      font-size: 1.2rem;
+      font-size: 1.25rem;
     }
 
+    /* Модальное окно */
     .modal {
       display: none;
       position: fixed;
@@ -221,6 +252,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      z-index: 100;
     }
 
     .modal-content {
@@ -228,13 +260,13 @@
       padding: 20px;
       border-radius: 14px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
     }
 
     .modal select, .modal input {
       width: 100%;
       padding: 10px;
-      margin: 8px 0 16px;
+      margin: 8px 0 14px;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
@@ -243,51 +275,55 @@
 <body>
 
   <div class="app-container">
-    <!-- Шапка -->
+    <!-- Шапка с переключателем KZ / RU -->
     <header>
+      <div class="lang-switcher">
+        <button class="lang-btn" id="btnKz" onclick="setLanguage('kz')">KZ</button>
+        <button class="lang-btn active" id="btnRu" onclick="setLanguage('ru')">RU</button>
+      </div>
       <h1>🌿 Smart EcoBin</h1>
-      <p>Умная урна: сортируй отходы с выгодой</p>
+      <p id="t_subtitle">Умная урна: сортируй отходы с выгодой</p>
     </header>
 
     <!-- Личный кабинет & Бонусы -->
     <div class="card">
-      <div class="card-title">👤 Мой баланс</div>
+      <div class="card-title">👤 <span id="t_balanceTitle">Мой баланс</span></div>
       <div class="balance-box">
         <div class="balance-value"><span id="userBalance">0</span> ₸</div>
-        <small style="color: var(--text-muted);">1 бонус = 1 тенге</small>
+        <small style="color: var(--text-muted);" id="t_bonusRate">1 бонус = 1 тенге</small>
       </div>
 
       <div style="font-size: 0.85rem; color: var(--text-muted); display:flex; justify-content:space-between;">
-        <span>Прогресс до вывода:</span>
-        <span><b id="progressPercent">0%</b> (цель: 1 000 ₸)</span>
+        <span id="t_progressLabel">Прогресс до вывода:</span>
+        <span><b id="progressPercent">0%</b> (<span id="t_targetLimit">мақсат</span>: 1 000 ₸)</span>
       </div>
       <div class="progress-bar-container">
         <div class="progress-bar-fill" id="progressBar"></div>
       </div>
 
       <button id="withdrawBtn" class="btn-primary" disabled onclick="openWithdrawModal()">
-        Вывести 1 000 ₸
+        <!-- Заполняется в JS -->
       </button>
 
       <!-- Интерактивная зона симуляции сдачи мусора через урну -->
       <div style="margin-top: 18px;">
-        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
+        <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);" id="t_simTitle">
           СИМУЛЯЦИЯ СДАЧИ В ОТСЕК:
         </span>
         <div class="btn-grid">
-          <button class="btn-action" onclick="addTrash('paper', 15)">
+          <button class="btn-action" onclick="addTrash(15)">
             <span class="icon">📄</span>
-            Макулатура
+            <span id="t_paper">Макулатура</span>
             <small>+15 ₸</small>
           </button>
-          <button class="btn-action" onclick="addTrash('plastic', 25)">
+          <button class="btn-action" onclick="addTrash(25)">
             <span class="icon">🧴</span>
-            Пластик
+            <span id="t_plastic">Пластик</span>
             <small>+25 ₸</small>
           </button>
-          <button class="btn-action" onclick="addTrash('metal_glass', 35)">
+          <button class="btn-action" onclick="addTrash(35)">
             <span class="icon">🥫</span>
-            Стекло / Жесть
+            <span id="t_metal">Шыны / Қаңылтыр</span>
             <small>+35 ₸</small>
           </button>
         </div>
@@ -296,46 +332,52 @@
 
     <!-- Калькулятор объёма урны / контейнера -->
     <div class="card">
-      <div class="card-title">📐 Формула объёма (V = a × b × h)</div>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+      <div class="card-title">📐 <span id="t_calcTitle">Формула объёма (V = a × b × h)</span></div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;" id="t_calcDesc">
         Рассчитайте вместимость приёмного отсека или накопительного контейнера в сантиметрах:
       </p>
 
       <div class="calc-inputs">
         <div class="input-group">
-          <label for="dimL">Длина (см)</label>
+          <label for="dimL" id="t_dimL">Длина (см)</label>
           <input type="number" id="dimL" value="30" min="0" oninput="calculateVolume()">
         </div>
         <div class="input-group">
-          <label for="dimW">Ширина (см)</label>
+          <label for="dimW" id="t_dimW">Ширина (см)</label>
           <input type="number" id="dimW" value="25" min="0" oninput="calculateVolume()">
         </div>
         <div class="input-group">
-          <label for="dimH">Высота (см)</label>
+          <label for="dimH" id="t_dimH">Высота (см)</label>
           <input type="number" id="dimH" value="40" min="0" oninput="calculateVolume()">
         </div>
       </div>
 
       <div class="calc-result" id="calcResult">
-        <strong>Объём:</strong> 0.030 м³ (~30.0 л)
+        <!-- Заполняется в JS -->
       </div>
     </div>
 
     <!-- Блок экологии -->
     <div class="card">
-      <div class="card-title">🌍 Зачем нужна сортировка?</div>
+      <div class="card-title">🌍 <span id="t_ecoTitle">Зачем нужна сортировка?</span></div>
       <div class="eco-facts">
         <div class="fact-item">
           <div class="fact-icon">📦</div>
-          <div><strong>Макулатура:</strong> 100 кг сданной бумаги спасают 1 взрослое дерево и экономят до 2 000 литров чистой воды.</div>
+          <div id="t_factPaper">
+            <strong>Макулатура:</strong> 100 кг сданной бумаги спасают 1 дерево и экономят до 2 000 л чистой воды.
+          </div>
         </div>
         <div class="fact-item">
           <div class="fact-icon">🥤</div>
-          <div><strong>Пластик:</strong> Разлагается до 450 лет. Переработка одной пластиковой бутылки экономит энергию для 3 часов работы лампы.</div>
+          <div id="t_factPlastic">
+            <strong>Пластик:</strong> Разлагается до 450 лет. Переработка одной бутылки экономит энергию для 3 часов работы лампы.
+          </div>
         </div>
         <div class="fact-item">
           <div class="fact-icon">🥫</div>
-          <div><strong>Жесть и металл:</strong> Могут перерабатываться бесконечное количество раз без потери прочности и качества.</div>
+          <div id="t_factMetal">
+            <strong>Стекло и жесть:</strong> Могут перерабатываться бесконечное количество раз без потери свойств и прочности.
+          </div>
         </div>
       </div>
     </div>
@@ -344,21 +386,21 @@
   <!-- Модальное окно вывода средств -->
   <div class="modal" id="withdrawModal">
     <div class="modal-content">
-      <h3 style="margin-bottom: 10px;">Вывод бонусов</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted);">Доступно к выводу: 1 000 ₸</p>
+      <h3 style="margin-bottom: 6px;" id="t_modalTitle">Вывод бонусов</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);" id="t_modalSub">Доступно к выводу: 1 000 ₸</p>
 
-      <label style="font-size: 0.85rem; margin-top: 10px; display:block;">Куда направить средства:</label>
+      <label style="font-size: 0.85rem; margin-top: 12px; display:block;" id="t_modalSelectLabel">Куда направить средства:</label>
       <select id="withdrawTarget">
-        <option value="phone">Баланс телефона (Beeline, Kcell, Tele2/Altel)</option>
-        <option value="transport">Транспортная карта / Проезд</option>
-        <option value="charity">Экологический фонд озеленения</option>
+        <option value="phone" id="t_optPhone">Баланс телефона (Beeline, Kcell, Tele2/Altel)</option>
+        <option value="transport" id="t_optTransport">Транспортная карта (Onay / Проезд)</option>
+        <option value="charity" id="t_optCharity">Экологический фонд озеленения</option>
       </select>
 
       <input type="text" id="withdrawAccount" placeholder="Номер телефона или карты" />
 
       <div style="display:flex; gap: 8px;">
-        <button class="btn-primary" style="margin-top:0;" onclick="confirmWithdraw()">Подтвердить</button>
-        <button style="background:#e5e7eb;" onclick="closeWithdrawModal()">Отмена</button>
+        <button class="btn-primary" style="margin-top:0;" onclick="confirmWithdraw()" id="t_btnConfirm">Подтвердить</button>
+        <button style="background:#e5e7eb; color: var(--text);" onclick="closeWithdrawModal()" id="t_btnCancel">Отмена</button>
       </div>
     </div>
   </div>
@@ -366,8 +408,126 @@
   <script>
     const WITHDRAW_LIMIT = 1000;
     let balance = parseInt(localStorage.getItem('ecoBalance') || '0', 10);
+    let currentLang = localStorage.getItem('ecoLang') || 'ru';
+
+    const translations = {
+      ru: {
+        subtitle: "Умная урна: сортируй отходы с выгодой",
+        balanceTitle: "Мой баланс",
+        bonusRate: "1 бонус = 1 тенге",
+        progressLabel: "Прогресс до вывода:",
+        targetLimit: "цель",
+        btnAvailable: "Вывести 1 000 ₸ (Доступно!)",
+        btnLeftPrefix: "До вывода ещё ",
+        simTitle: "СИМУЛЯЦИЯ СДАЧИ В ОТСЕК:",
+        paper: "Макулатура",
+        plastic: "Пластик",
+        metal: "Стекло / Жесть",
+        calcTitle: "Формула объёма (V = a × b × h)",
+        calcDesc: "Рассчитайте вместимость приёмного отсека или накопительного контейнера в сантиметрах:",
+        dimL: "Длина (см)",
+        dimW: "Ширина (см)",
+        dimH: "Высота (см)",
+        volumeLabel: "Объём",
+        ecoTitle: "Зачем нужна сортировка?",
+        factPaper: "<strong>Макулатура:</strong> 100 кг сданной бумаги спасают 1 взрослое дерево и экономят до 2 000 л чистой воды.",
+        factPlastic: "<strong>Пластик:</strong> Разлагается до 450 лет. Переработка одной бутылки экономит энергию для 3 часов работы лампы.",
+        factMetal: "<strong>Стекло и жесть:</strong> Могут перерабатываться бесконечное количество раз без потери свойств и прочности.",
+        modalTitle: "Вывод бонусов",
+        modalSub: "Доступно к выводу: 1 000 ₸",
+        modalSelectLabel: "Куда направить средства:",
+        optPhone: "Баланс телефона (Beeline, Kcell, Tele2/Altel)",
+        optTransport: "Транспортная карта (Onay / Проезд)",
+        optCharity: "Экологический фонд озеленения",
+        inputPlaceholder: "Номер телефона или карты",
+        btnConfirm: "Растау (Подтвердить)",
+        btnCancel: "Болдырмау (Отмена)",
+        alertNoAccount: "Пожалуйста, введите реквизиты!",
+        alertSuccess: "Запрос на вывод 1 000 ₸ успешно оформлен!"
+      },
+      kz: {
+        subtitle: "Ақылды қоқыс жәшігі: қалдықты сұрыптап, табыс тап",
+        balanceTitle: "Менің балансым",
+        bonusRate: "1 бонус = 1 теңге",
+        progressLabel: "Шығаруға дейінгі прогресс:",
+        targetLimit: "мақсат",
+        btnAvailable: "1 000 ₸ шығару (Қолжетімді!)",
+        btnLeftPrefix: "Шығаруға дейін әлі ",
+        simTitle: "БӨЛІМГЕ ҚАЛДЫҚ ТАСТАУ СИМУЛЯЦИЯСЫ:",
+        paper: "Макулатура",
+        plastic: "Пластик",
+        metal: "Шыны / Қаңылтыр",
+        calcTitle: "Көлем формуласы (V = a × b × h)",
+        calcDesc: "Қабылдау бөлімінің немесе сыйымдылық контейнерінің көлемін сантиметрмен есептеңіз:",
+        dimL: "Ұзындығы (см)",
+        dimW: "Ені (см)",
+        dimH: "Биіктігі (см)",
+        volumeLabel: "Көлемі",
+        ecoTitle: "Қалдықты сұрыптау не үшін қажет?",
+        factPaper: "<strong>Макулатура:</strong> 100 кг қағаз 1 үлкен ағашты сақтап қалады және 2 000 л таза суды үнемдейді.",
+        factPlastic: "<strong>Пластик:</strong> 450 жылға дейін шіриді. Бір ғана бөтелкені қайта өңдеу шамның 3 сағат жануына қуат береді.",
+        factMetal: "<strong>Шыны және қаңылтыр:</strong> Сапасын жоғалтпай шексіз рет қайта өңдеуге жарамды.",
+        modalTitle: "Бонустарды шығару",
+        modalSub: "Шығаруға қолжетімді: 1 000 ₸",
+        modalSelectLabel: "Қаражатты қайда аудару керек:",
+        optPhone: "Телефон теңгеріміне (Beeline, Kcell, Tele2/Altel)",
+        optTransport: "Көлік картасына (Onay / Жол ақысы)",
+        optCharity: "Экологиялық көгалдандыру қорына",
+        inputPlaceholder: "Телефон нөмірін немесе картаны енгізіңіз",
+        btnConfirm: "Растау",
+        btnCancel: "Болдырмау",
+        alertNoAccount: "Деректерді толтырыңыз!",
+        alertSuccess: "1 000 ₸ шығаруға сұраныс сәтті жіберілді!"
+      }
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('ecoLang', lang);
+
+      // Переключение активного класса на кнопках
+      document.getElementById('btnRu').classList.toggle('active', lang === 'ru');
+      document.getElementById('btnKz').classList.toggle('active', lang === 'kz');
+
+      const t = translations[lang];
+
+      document.getElementById('t_subtitle').textContent = t.subtitle;
+      document.getElementById('t_balanceTitle').textContent = t.balanceTitle;
+      document.getElementById('t_bonusRate').textContent = t.bonusRate;
+      document.getElementById('t_progressLabel').textContent = t.progressLabel;
+      document.getElementById('t_targetLimit').textContent = t.targetLimit;
+      document.getElementById('t_simTitle').textContent = t.simTitle;
+      document.getElementById('t_paper').textContent = t.paper;
+      document.getElementById('t_plastic').textContent = t.plastic;
+      document.getElementById('t_metal').textContent = t.metal;
+
+      document.getElementById('t_calcTitle').textContent = t.calcTitle;
+      document.getElementById('t_calcDesc').textContent = t.calcDesc;
+      document.getElementById('t_dimL').textContent = t.dimL;
+      document.getElementById('t_dimW').textContent = t.dimW;
+      document.getElementById('t_dimH').textContent = t.dimH;
+
+      document.getElementById('t_ecoTitle').textContent = t.ecoTitle;
+      document.getElementById('t_factPaper').innerHTML = t.factPaper;
+      document.getElementById('t_factPlastic').innerHTML = t.factPlastic;
+      document.getElementById('t_factMetal').innerHTML = t.factMetal;
+
+      document.getElementById('t_modalTitle').textContent = t.modalTitle;
+      document.getElementById('t_modalSub').textContent = t.modalSub;
+      document.getElementById('t_modalSelectLabel').textContent = t.modalSelectLabel;
+      document.getElementById('t_optPhone').textContent = t.optPhone;
+      document.getElementById('t_optTransport').textContent = t.optTransport;
+      document.getElementById('t_optCharity').textContent = t.optCharity;
+      document.getElementById('withdrawAccount').placeholder = t.inputPlaceholder;
+      document.getElementById('t_btnConfirm').textContent = t.btnConfirm;
+      document.getElementById('t_btnCancel').textContent = t.btnCancel;
+
+      updateUI();
+      calculateVolume();
+    }
 
     function updateUI() {
+      const t = translations[currentLang];
       document.getElementById('userBalance').textContent = balance;
       const progress = Math.min((balance / WITHDRAW_LIMIT) * 100, 100);
       document.getElementById('progressBar').style.width = progress + '%';
@@ -376,14 +536,14 @@
       const withdrawBtn = document.getElementById('withdrawBtn');
       if (balance >= WITHDRAW_LIMIT) {
         withdrawBtn.disabled = false;
-        withdrawBtn.textContent = 'Вывести 1 000 ₸ (Доступно!)';
+        withdrawBtn.textContent = t.btnAvailable;
       } else {
         withdrawBtn.disabled = true;
-        withdrawBtn.textContent = `До вывода ещё ${WITHDRAW_LIMIT - balance} ₸`;
+        withdrawBtn.textContent = `${t.btnLeftPrefix}${WITHDRAW_LIMIT - balance} ₸`;
       }
     }
 
-    function addTrash(type, reward) {
+    function addTrash(reward) {
       balance += reward;
       localStorage.setItem('ecoBalance', balance);
       updateUI();
@@ -398,9 +558,10 @@
     }
 
     function confirmWithdraw() {
+      const t = translations[currentLang];
       const account = document.getElementById('withdrawAccount').value.trim();
       if (!account) {
-        alert('Пожалуйста, введите реквизиты!');
+        alert(t.alertNoAccount);
         return;
       }
 
@@ -408,11 +569,12 @@
       localStorage.setItem('ecoBalance', balance);
       updateUI();
       closeWithdrawModal();
-      alert('Запрос на вывод 1 000 ₸ успешно оформлен!');
+      document.getElementById('withdrawAccount').value = '';
+      alert(t.alertSuccess);
     }
 
-    // Расчет объема: V = a * b * h (в сантиметрах -> метры кубические и литры)
     function calculateVolume() {
+      const t = translations[currentLang];
       const l = parseFloat(document.getElementById('dimL').value) || 0;
       const w = parseFloat(document.getElementById('dimW').value) || 0;
       const h = parseFloat(document.getElementById('dimH').value) || 0;
@@ -422,12 +584,11 @@
       const volumeLiters = volumeCm3 / 1000;
 
       document.getElementById('calcResult').innerHTML = 
-        `<strong>Объём:</strong> ${volumeM3.toFixed(3)} м³ (~${volumeLiters.toFixed(1)} л)`;
+        `<strong>${t.volumeLabel}:</strong> ${volumeM3.toFixed(3)} м³ (~${volumeLiters.toFixed(1)} л)`;
     }
 
-    // Инициализация при запуске
-    updateUI();
-    calculateVolume();
+    // Инициализация при первой загрузке
+    setLanguage(currentLang);
   </script>
 </body>
 </html>
